@@ -60,6 +60,7 @@ class Corpus(object):
                     txt_doc.append(item.replace(' ','').replace('\t','').lower())        
                 
             self.documents.append(txt_doc)
+
         self.number_of_documents = len(self.documents)
             
 
@@ -91,7 +92,7 @@ class Corpus(object):
         
         for txt in self.documents:
             cnt = Counter()
-            for word in self.vocabulary:
+            for word in txt:
                 cnt[word]+=1
 
             def return_key(key):

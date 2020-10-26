@@ -26,6 +26,9 @@ corpus.plsa(number_of_topics, max_iterations, epsilon)
 
         corpus.build_term_doc_matrix()
         
+        a = corpus.term_doc_matrix
+        b = corpus.documents
+        
         # Create the counter arrays.
         
         # P(z | d, w)
