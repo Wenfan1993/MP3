@@ -232,15 +232,11 @@ class Corpus(object):
             
             try:
                 delta = abs(self.likelihoods[-1] - self.likelihoods[-2])
-                print(f'iteration {iteration+1} loss is {abs(loss)}, delta is {delta}')
                 if delta<epsilon:
                     break
 
             except IndexError:
-                if iteration<3:
-                    pass
-                else:
-                    raise IndexError(f'something is wrong, check delta')
+                pass
             
 
 def main():
