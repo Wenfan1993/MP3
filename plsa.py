@@ -115,11 +115,11 @@ class Corpus(object):
         """
         self.number_of_topics = number_of_topics
         self.document_topic_prob = np.random.rand(self.number_of_documents,number_of_topics)
-        self.document_topic_prob = self.document_topic_prob/self.document_topic_prob.sum(axis=1).reshape(self.number_of_documents,-1)
+        self.document_topic_prob = normalize(self.document_topic_prob)
                 
         self.topic_word_prob = np.random.rand(number_of_topics, self.vocabulary_size)
-        self.topic_word_prob = self.topic_word_prob / self.topic_word_prob.sum(axis=0).reshape(-1,self.vocabulary_size)
-
+        self.topic_word_prob = (normalize(self.topic_word_prob.T)).T
+        
                                                                                                
     def initialize_uniformly(self, number_of_topics):
         """
