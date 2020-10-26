@@ -27,6 +27,11 @@ corpus.plsa(number_of_topics, max_iterations, epsilon)
         corpus.build_term_doc_matrix()
         
         a = corpus.term_doc_matrix
+        
+        b = np.log(corpus.document_topic_prob.dot(corpus.topic_word_prob))
+        
+        c = a * b.shape
+        
         b = corpus.documents
         
         # Create the counter arrays.
@@ -36,7 +41,14 @@ corpus.plsa(number_of_topics, max_iterations, epsilon)
 
         # P(z | d) P(w | z)
         corpus.initialize(number_of_topics, random=True)
-
+        
+        c = corpus.document_topic_prob
+        d = corpus.topic_word_prob
+        e = corpus.w_d
+        f = corpus.likelihoods
+        topic_prob = corpus.topic_prob
+        
+        
         # Run the EM algorithm
         current_likelihood = 0.0
 

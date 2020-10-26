@@ -173,16 +173,15 @@ class Corpus(object):
             d_prob = self.term_doc_matrix[d,:].dot(self.topic_word_prob.T)/np.sum(self.term_doc_matrix[d,:].dot(self.topic_word_prob.T))
             document_topic_prob[d] = d_prob
         
-        document_topic_prob = document_topic_prob/document_topic_prob.sum(axis=0).reshape(-1,document_topic_prob.shape[1])
+        document_topic_prob = normalize(document_topic_prob)
+
         
         topic_word_prob = np.zeros((self.vocabulary_size,self.number_of_topics))
         for w in range(self.vocabulary_size):
             w_prob = self.term_doc_matrix[:,w].T.dot(self.topic_prob[:,w,:].reshape(self.number_of_documents,self.number_of_topics))
             topic_word_prob[w] = w_prob
-        
-        topic_word_prob_norm = topic_word_prob/topic_word_prob.sum(axis=0).reshape(-1,topic_word_prob.shape[1])
-        
-        self.topic_word_prob = topic_word_prob_norm.T
+                
+        self.topic_word_prob = normalize(topic_word_prob).T
     
 
     def calculate_likelihood(self, number_of_topics):
@@ -194,10 +193,6 @@ class Corpus(object):
         """
         likelihood = np.sum(self.term_doc_matrix * np.log(self.document_topic_prob.dot(self.topic_word_prob)))
         self.likelihoods.append(likelihood)
-        
-        # ############################
-        # your code here
-        # ############################
         
         return likelihood
 
