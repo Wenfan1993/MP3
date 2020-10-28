@@ -213,7 +213,7 @@ class Corpus(object):
         current_likelihood = 0.0
 
         for iteration in range(max_iter):
-            print("Iteration #" + str(iteration + 1) + "...")
+            print("Iteration #" + f'{iteration} + 1' + "...")
             
             self.expectation_step()
             
@@ -236,8 +236,8 @@ def main():
     corpus.build_corpus()
     corpus.build_vocabulary()
     print(corpus.vocabulary)
-    print("Vocabulary size:" + str(len(corpus.vocabulary)))
-    print("Number of documents:" + str(len(corpus.documents)))
+    #print("Vocabulary size:" + str(len(corpus.vocabulary)))
+    #print("Number of documents:" + str(len(corpus.documents)))
     number_of_topics = 2
     max_iterations = 50
     epsilon = 0.001
