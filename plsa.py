@@ -39,6 +39,7 @@ class Corpus(object):
         self.number_of_documents = 0
         self.vocabulary_size = 0
 
+#function 1
     def build_corpus(self):
         """
         Read document, fill in self.documents, a list of list of word
@@ -55,15 +56,15 @@ class Corpus(object):
                 if item[0]==str(0) or item[0]==str(1):
                     item = item[1:]
                 
-                item = item.replace(' ','').replace('\t','').replace('\n','')
+                item = item.replace(' ','').replace('\t','').replace('\n','').lower()
                 if len(item)>0:
-                    txt_doc.append(item.replace(' ','').replace('\t','').lower())        
+                    txt_doc.append(item)        
                 
             self.documents.append(txt_doc)
 
         self.number_of_documents = len(self.documents)
             
-
+#function2
     def build_vocabulary(self):
         """
         Construct a list of unique words in the whole corpus. Put it in self.vocabulary
@@ -79,7 +80,7 @@ class Corpus(object):
         self.vocabulary = list(set(self.vocabulary))        
         self.vocabulary_size = len(self.vocabulary)        
 
-
+#function 3
     def build_term_doc_matrix(self):
         """
         Construct the term-document matrix where each row represents a document, 
@@ -105,7 +106,7 @@ class Corpus(object):
         
         self.term_doc_matrix = np.array(matrix)
 
-
+#function 4
     def initialize_randomly(self, number_of_topics):
         """
         Randomly initialize the matrices: document_topic_prob and topic_word_prob
@@ -119,7 +120,7 @@ class Corpus(object):
         self.document_topic_prob = normalize(self.document_topic_prob)
                 
         self.topic_word_prob = np.random.rand(number_of_topics, self.vocabulary_size)
-        self.topic_word_prob = (normalize(self.topic_word_prob.T)).T
+        self.topic_word_prob = normalize(self.topic_word_prob)
         
                                                                                                
     def initialize_uniformly(self, number_of_topics):
@@ -150,38 +151,26 @@ class Corpus(object):
         """
         print("E step:")
         
-        self.w_d = self.topic_word_prob.T.dot(self.document_topic_prob.T)#size w*d
+        self.document_word_prob = self.document_topic_prob.dot(self.topic_word_prob)#size d*w = 
         
-        d_topic_prob = []
-        
+        self.document_word_topic_prob = np.zeros((self.number_of_documents,self.vocabulary_size,self.number_of_topics))        
         for d in range(self.number_of_documents):
-            w_topic_prob = []
             for w in range(self.vocabulary_size):
-                w_topic_prob.append([(self.document_topic_prob[d,k]*self.topic_word_prob[k,w])/self.w_d[w,d] for k in range(self.number_of_topics)])
-            d_topic_prob.append(w_topic_prob)
-        
-        self.topic_prob = np.array(d_topic_prob)
-            
+                self.document_word_topic_prob[d][w] = self.document_topic_prob[d].reshape(-1)*self.topic_word_prob[:,w].reshape(-1)/(self.document_word_prob[d,w])
 
     def maximization_step(self, number_of_topics):
         """ The M-step updates P(w | z)
         """
         print("M step:")
         
-        document_topic_prob = np.zeros((self.number_of_documents,self.number_of_topics))
-        for d in range(self.number_of_documents):
-            d_prob = self.term_doc_matrix[d,:].dot(self.topic_word_prob.T)/np.sum(self.term_doc_matrix[d,:].dot(self.topic_word_prob.T))
-            document_topic_prob[d] = d_prob
-        
-        document_topic_prob = normalize(document_topic_prob)
+        term_doc_matrix_reshape = self.term_doc_matrix.reshape(self.term_doc_matrix.shape[0],self.term_doc_matrix.shape[1],1)
+        term_times_document_word_topic = term_doc_matrix_reshape * self.document_word_topic_prob
 
-        
-        topic_word_prob = np.zeros((self.vocabulary_size,self.number_of_topics))
-        for w in range(self.vocabulary_size):
-            w_prob = self.term_doc_matrix[:,w].T.dot(self.topic_prob[:,w,:].reshape(self.number_of_documents,self.number_of_topics))
-            topic_word_prob[w] = w_prob
-                
-        self.topic_word_prob = normalize(topic_word_prob).T
+        document_word_prob_ = term_times_document_word_topic.sum(axis=1)/(term_times_document_word_topic.sum(axis=1)).sum(axis=1).reshape(-1,1)
+        self.document_word_prob = normalize(document_word_prob_)
+
+        topic_word_prob_ = term_times_document_word_topic.sum(axis=0)/(term_times_document_word_topic.sum(axis=0)).sum(axis=0).reshape(1,-1)
+        self.topic_word_prob = normalize(topic_word_prob_.T)
     
 
     def calculate_likelihood(self, number_of_topics):
