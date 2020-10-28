@@ -13,6 +13,7 @@ path = r'C:\Users\Wenxi\Desktop\git_projects\MP3'
 os.chdir(path)
 
 documents_path = 'data/test.txt'
+likelihoods = []
 
 def normalize(input_matrix):
     """
@@ -63,6 +64,11 @@ for txt in documents:
 vocabulary = list(set(vocabulary))        
 vocabulary_size = len(vocabulary)     
 
+
+#prepare other 
+number_of_topics = 2
+topic_prob = np.zeros([number_of_documents, number_of_topics, vocabulary_size], dtype=np.float)
+
 ##===function 3
 ##===to get - 1. term_doc_matrix = np.array
    
@@ -88,7 +94,7 @@ term_doc_matrix = np.array(matrix)
 ##===topic_word_prob: and P(w | z)
 ##===to get - 1. term_doc_matrix = np.array
 
-number_of_topics = 2
+
 document_topic_prob = np.random.rand(number_of_documents,number_of_topics)
 document_topic_prob = normalize(document_topic_prob)
         
@@ -100,22 +106,30 @@ topic_word_prob = normalize(topic_word_prob)
 ##===document_word_topic_prob: P(z | d, w)
 document_word_prob = document_topic_prob.dot(topic_word_prob)#size d*w = 
 
-document_word_topic_prob = np.zeros((number_of_documents,vocabulary_size,number_of_topics))        
 for d in range(number_of_documents):
     for w in range(vocabulary_size):
-        document_word_topic_prob[d][w] = document_topic_prob[d].reshape(-1)*topic_word_prob[:,w].reshape(-1)/(document_word_prob[d,w])
+        for z in range(number_of_topics):
+            topic_prob[d,z,w] = (document_topic_prob[d].reshape(-1)*topic_word_prob[:,w].reshape(-1))[z]/(document_word_prob[d,w])
 
 ##===function 6
 ##===document_topic_prob: P(z | d)
 
-term_doc_matrix_reshape = term_doc_matrix.reshape(term_doc_matrix.shape[0],term_doc_matrix.shape[1],1)
-term_times_document_word_topic = term_doc_matrix_reshape * document_word_topic_prob
+term_doc_matrix_reshape = term_doc_matrix.reshape(term_doc_matrix.shape[0],1,term_doc_matrix.shape[1])
+term_times_document_word_topic = term_doc_matrix_reshape * topic_prob
 
-document_word_prob_ = term_times_document_word_topic.sum(axis=1)/(term_times_document_word_topic.sum(axis=1)).sum(axis=1).reshape(-1,1)
+document_word_prob_ = term_times_document_word_topic.sum(axis=2)/(term_times_document_word_topic.sum(axis=2)).sum(axis=1).reshape(-1,1)
 document_word_prob = normalize(document_word_prob_)
 
-topic_word_prob_ = term_times_document_word_topic.sum(axis=0)/(term_times_document_word_topic.sum(axis=0)).sum(axis=0).reshape(1,-1)
-topic_word_prob = normalize(topic_word_prob_.T)
+topic_word_prob_ = term_times_document_word_topic.sum(axis=0)/(term_times_document_word_topic.sum(axis=0)).sum(axis=1).reshape(-1,1)
+topic_word_prob = normalize(topic_word_prob_)
+
+
+likelihood = np.sum(term_doc_matrix * np.log(document_topic_prob.dot(topic_word_prob)))
+
+likelihoods.append(likelihood)
+
+
+
 
 
 documents_path = 'data/test.txt'
@@ -130,3 +144,4 @@ max_iterations = 50
 epsilon = 0.001
 corpus.plsa(number_of_topics, max_iterations, epsilon)
 
+corpus.document_topic_prob

@@ -153,24 +153,24 @@ class Corpus(object):
         
         self.document_word_prob = self.document_topic_prob.dot(self.topic_word_prob)#size d*w = 
         
-        self.document_word_topic_prob = np.zeros((self.number_of_documents,self.vocabulary_size,self.number_of_topics))        
         for d in range(self.number_of_documents):
             for w in range(self.vocabulary_size):
-                self.document_word_topic_prob[d][w] = self.document_topic_prob[d].reshape(-1)*self.topic_word_prob[:,w].reshape(-1)/(self.document_word_prob[d,w])
+                for z in range(self.number_of_topics):
+                    self.topic_prob[d,z,w] = (self.document_topic_prob[d].reshape(-1)*self.topic_word_prob[:,w].reshape(-1))[z]/(self.document_word_prob[d,w])
 
     def maximization_step(self, number_of_topics):
         """ The M-step updates P(w | z)
         """
         print("M step:")
         
-        term_doc_matrix_reshape = self.term_doc_matrix.reshape(self.term_doc_matrix.shape[0],self.term_doc_matrix.shape[1],1)
-        term_times_document_word_topic = term_doc_matrix_reshape * self.document_word_topic_prob
+        term_doc_matrix_reshape = self.term_doc_matrix.reshape(self.term_doc_matrix.shape[0],1,self.term_doc_matrix.shape[1])
+        term_times_document_word_topic = term_doc_matrix_reshape * self.topic_prob
 
-        document_word_prob_ = term_times_document_word_topic.sum(axis=1)/(term_times_document_word_topic.sum(axis=1)).sum(axis=1).reshape(-1,1)
+        document_word_prob_ = term_times_document_word_topic.sum(axis=2)/(term_times_document_word_topic.sum(axis=2)).sum(axis=1).reshape(-1,1)
         self.document_word_prob = normalize(document_word_prob_)
 
-        topic_word_prob_ = term_times_document_word_topic.sum(axis=0)/(term_times_document_word_topic.sum(axis=0)).sum(axis=0).reshape(1,-1)
-        self.topic_word_prob = normalize(topic_word_prob_.T)
+        topic_word_prob_ = term_times_document_word_topic.sum(axis=0)/(term_times_document_word_topic.sum(axis=0)).sum(axis=1).reshape(-1,1)
+        self.topic_word_prob = normalize(topic_word_prob_)
     
 
     def calculate_likelihood(self, number_of_topics):
