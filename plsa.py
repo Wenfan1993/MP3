@@ -1,6 +1,5 @@
 import numpy as np
 import math
-from collections import Counter
 
 
 def normalize(input_matrix):
@@ -16,6 +15,11 @@ def normalize(input_matrix):
     new_matrix = input_matrix / row_sums[:, np.newaxis]
     return new_matrix
 
+def get_count(txt_list,value):
+    try:
+        return txt_list.count(value)
+    except ValueError:
+        return 0
        
 class Corpus(object):
 
@@ -92,18 +96,7 @@ class Corpus(object):
         matrix = []
         
         for txt in self.documents:
-            cnt = Counter()
-            for word in txt:
-                cnt[word]+=1
-
-            def return_key(key):
-                try:
-                    return cnt[key]
-                except KeyError:
-                    return 0
-
-            matrix.append(list(map(return_key, self.vocabulary)))
-        
+            matrix.append([get_count(txt,v) for v in self.vocabulary])       
         self.term_doc_matrix = np.array(matrix)
 
 #function 4
@@ -151,27 +144,40 @@ class Corpus(object):
         """
         print("E step:")
         
-        self.document_word_prob = self.document_topic_prob.dot(self.topic_word_prob)#size d*w = 
+        self.document_word_prob = self.document_topic_prob.dot(self.topic_word_prob)#size d*w
         
         for d in range(self.number_of_documents):
             for w in range(self.vocabulary_size):
                 for z in range(self.number_of_topics):
-                    self.topic_prob[d,z,w] = (self.document_topic_prob[d].reshape(-1)*self.topic_word_prob[:,w].reshape(-1))[z]/(self.document_word_prob[d,w])
+                    self.topic_prob[d,z,w] = (self.document_topic_prob[d,z]*self.topic_word_prob[z,w])/(self.document_word_prob[d,w])
+            #self.topic_prob[d] = normalize(self.topic_prob[d])
+                    
+            
 
     def maximization_step(self, number_of_topics):
         """ The M-step updates P(w | z)
         """
         print("M step:")
         
-        term_doc_matrix_reshape = self.term_doc_matrix.reshape(self.term_doc_matrix.shape[0],1,self.term_doc_matrix.shape[1])
-        term_times_document_word_topic = term_doc_matrix_reshape * self.topic_prob
-
-        document_word_prob_ = term_times_document_word_topic.sum(axis=2)/(term_times_document_word_topic.sum(axis=2)).sum(axis=1).reshape(-1,1)
-        self.document_word_prob = normalize(document_word_prob_)
-
-        topic_word_prob_ = term_times_document_word_topic.sum(axis=0)/(term_times_document_word_topic.sum(axis=0)).sum(axis=1).reshape(-1,1)
-        self.topic_word_prob = normalize(topic_word_prob_)
-    
+        for d in range(self.number_of_documents):
+            total_z = 0
+            z_list = []
+            for z in range(self.number_of_topics):
+                item = sum(self.term_doc_matrix[d,w]*self.topic_prob[d,z,w] for w in range(self.vocabulary_size))
+                z_list.append(item)
+                total_z += item
+            
+            self.document_topic_prob[d] = np.array(z_list)/total_z
+            
+            
+        for z in range(self.number_of_topics):
+            total_w=0
+            w_list=[]
+            for w in range(self.vocabulary_size):
+                item_w = sum(self.term_doc_matrix[d,w]*self.topic_prob[d,z,w] for d in range(self.number_of_documents))
+                w_list.append(item_w)
+                total_w +=item_w
+            self.topic_word_prob[z] = np.array(w_list)/total_w    
 
     def calculate_likelihood(self, number_of_topics):
         """ Calculate the current log-likelihood of the model using
